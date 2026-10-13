@@ -39,9 +39,15 @@ class InputControllerManager {
       if (e.key === 'ArrowUp' || e.key === '1') {
         e.preventDefault();
         this.dispatch({ action: 'SELECT_A', source: 'keyboard' });
-      } else if (e.key === 'ArrowDown' || e.key === '2') {
+      } else if (e.key === 'ArrowRight' || e.key === '2') {
         e.preventDefault();
         this.dispatch({ action: 'SELECT_B', source: 'keyboard' });
+      } else if (e.key === 'ArrowDown' || e.key === '3') {
+        e.preventDefault();
+        this.dispatch({ action: 'SELECT_C', source: 'keyboard' });
+      } else if (e.key === 'ArrowLeft' || e.key === '4') {
+        e.preventDefault();
+        this.dispatch({ action: 'SELECT_D', source: 'keyboard' });
       } else if (e.key === 'Escape') {
         e.preventDefault();
         this.dispatch({ action: 'CANCEL', source: 'keyboard' });
@@ -66,16 +72,19 @@ class InputControllerManager {
     this.dispatch({ action: 'SELECT_B', source });
   }
 
+  public triggerOptionC(source: InputSelectionEvent['source'] = 'screen_tap'): void {
+    this.dispatch({ action: 'SELECT_C', source });
+  }
+
+  public triggerOptionD(source: InputSelectionEvent['source'] = 'screen_tap'): void {
+    this.dispatch({ action: 'SELECT_D', source });
+  }
+
   public triggerCancel(): void {
     this.dispatch({ action: 'CANCEL', source: 'screen_tap' });
   }
 
   // --- Native Android Bridge Interface ---
-  /**
-   * Called by an Android WebView JavascriptInterface or Capacitor plugin.
-   * In a native Android Activity:
-   * onKeyDown(KeyEvent.KEYCODE_VOLUME_UP) -> webView.evaluateJavascript("window.FluentInputBridge.onNativeVolumeUp()")
-   */
   public registerAndroidBridge(): void {
     if (typeof window !== 'undefined') {
       const bridge = {
@@ -84,6 +93,12 @@ class InputControllerManager {
         },
         onNativeVolumeDown: () => {
           this.dispatch({ action: 'SELECT_B', source: 'hardware_volume' });
+        },
+        onNativeButton3: () => {
+          this.dispatch({ action: 'SELECT_C', source: 'hardware_volume' });
+        },
+        onNativeButton4: () => {
+          this.dispatch({ action: 'SELECT_D', source: 'hardware_volume' });
         },
       };
       (window as any).UnMuteInputBridge = bridge;

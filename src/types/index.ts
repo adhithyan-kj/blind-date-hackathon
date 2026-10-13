@@ -80,6 +80,6 @@ export interface VoiceOption {
 }
 
 export interface InputSelectionEvent {
-  action: 'SELECT_A' | 'SELECT_B' | 'CANCEL' | 'SPEAK_CURRENT';
+  action: 'SELECT_A' | 'SELECT_B' | 'SELECT_C' | 'SELECT_D' | 'CANCEL' | 'SPEAK_CURRENT';
   source: 'screen_tap' | 'keyboard' | 'hardware_volume' | 'switch_access';
 }

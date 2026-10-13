@@ -27,7 +27,8 @@ interface AppContextType {
   listeningMessage: string;
   transcriptItems: TranscriptItem[];
   interimTranscript: string;
-  fastModePair: FastModePair;
+  fastModeGroup: SuggestionGroup;
+  fastModePair: SuggestionGroup; // Alias
   isAutomaticModeActive: boolean;
   isFastModeActive: boolean;
   isFrozen: boolean;
@@ -38,6 +39,7 @@ interface AppContextType {
   settings: AppSettings;
   availableVoices: VoiceOption[];
   isSettingsOpen: boolean;
+  isTutorialOpen: boolean;
   speechError: string | null;
   toastMessage: { text: string; type: 'info' | 'success' | 'warn' | 'error' } | null;
 
@@ -65,6 +67,8 @@ interface AppContextType {
   clearTranscripts: () => void;
   resetAllData: () => void;
   setIsSettingsOpen: (open: boolean) => void;
+  setIsTutorialOpen: (open: boolean) => void;
+  completeTutorial: () => void;
   showToast: (text: string, type?: 'info' | 'success' | 'warn' | 'error') => void;
 }
 
@@ -87,9 +91,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isFrozen, setIsFrozen] = useState<boolean>(false);
   const [isUpdatingSuggestions, setIsUpdatingSuggestions] = useState<boolean>(false);
 
-  const [fastModePair, setFastModePair] = useState<FastModePair>({
+  const [fastModeGroup, setFastModeGroup] = useState<SuggestionGroup>({
     optionA: { id: 'opt_a_init', text: 'Yes, that sounds great.' },
     optionB: { id: 'opt_b_init', text: 'No, thank you.' },
+    optionC: { id: 'opt_c_init', text: 'Please give me a moment.' },
+    optionD: { id: 'opt_d_init', text: 'Could you please repeat that?' },
     timestamp: Date.now(),
   });
 
@@ -99,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'info' | 'success' | 'warn' | 'error' } | null>(null);
 
   const lastUpdateRef = useRef<number>(Date.now());
@@ -116,6 +123,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const savedSettings = StorageService.getSettings();
     setSettings(savedSettings);
+
+    // Show tutorial if first visit
+    if (!savedSettings.hasSeenTutorial) {
+      setIsTutorialOpen(true);
+    }
 
     const savedPhrases = StorageService.getPhrases();
     setPhrases(savedPhrases);
@@ -136,6 +148,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubKeyboard();
     };
   }, []);
+
+  // Complete tutorial handler
+  const completeTutorial = useCallback(() => {
+    setIsTutorialOpen(false);
+    updateSettings({ hasSeenTutorial: true });
+    showToast('Tutorial completed! You can reopen it anytime from Header.', 'success');
+  }, [showToast, updateSettings]);
 
   // Apply theme and accessibility classes to html element
   useEffect(() => {
@@ -177,20 +196,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       if (event.action === 'SELECT_A') {
-        const textToSpeak = fastModePair.optionA.text;
+        const textToSpeak = fastModeGroup.optionA.text;
         speakText(textToSpeak);
         showToast(`Selected Option A: "${textToSpeak}"`, 'success');
       } else if (event.action === 'SELECT_B') {
-        const textToSpeak = fastModePair.optionB.text;
+        const textToSpeak = fastModeGroup.optionB.text;
         speakText(textToSpeak);
         showToast(`Selected Option B: "${textToSpeak}"`, 'success');
+      } else if (event.action === 'SELECT_C') {
+        const textToSpeak = fastModeGroup.optionC.text;
+        speakText(textToSpeak);
+        showToast(`Selected Option C: "${textToSpeak}"`, 'success');
+      } else if (event.action === 'SELECT_D') {
+        const textToSpeak = fastModeGroup.optionD.text;
+        speakText(textToSpeak);
+        showToast(`Selected Option D: "${textToSpeak}"`, 'success');
       }
     });
 
     return () => {
       unsubInput();
     };
-  }, [fastModePair]);
+  }, [fastModeGroup]);
 
   // Text-To-Speech Execution
   const speakText = useCallback((text: string, options?: { previewOnly?: boolean }) => {
@@ -203,7 +230,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (settings.confirmBeforeSpeak) {
-      // If confirmation requested, stage into input box and notify
       setActiveInputText(text);
       showToast('Tap "Speak" to confirm output', 'info');
       return;
@@ -289,8 +315,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setTimeout(async () => {
         try {
-          const newPair = await activeSuggestionEngine.generateFastModePair(utteranceText);
-          setFastModePair(newPair);
+          const newGroup = await activeSuggestionEngine.generateFastModeGroup(utteranceText);
+          setFastModeGroup(newGroup);
           lastUpdateRef.current = Date.now();
         } finally {
           setIsUpdatingSuggestions(false);
@@ -475,7 +501,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         listeningMessage,
         transcriptItems,
         interimTranscript,
-        fastModePair,
+        fastModeGroup,
+        fastModePair: fastModeGroup,
         isAutomaticModeActive,
         isFastModeActive,
         isFrozen,
@@ -486,6 +513,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         settings,
         availableVoices,
         isSettingsOpen,
+        isTutorialOpen,
         speechError,
         toastMessage,
 
@@ -512,6 +540,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearTranscripts,
         resetAllData,
         setIsSettingsOpen,
+        setIsTutorialOpen,
+        completeTutorial,
         showToast,
       }}
     >
