@@ -47,7 +47,7 @@ export const FastModeScreen: React.FC = () => {
   const cardList = [
     {
       key: 'A' as const,
-      name: 'Option A',
+      name: 'Option 1 (A)',
       shortcut: '↑ / [1]',
       text: fastModeGroup.optionA.text,
       gradient: 'from-brand-900/60 via-calm-900/95 to-calm-900/95',
@@ -57,7 +57,7 @@ export const FastModeScreen: React.FC = () => {
     },
     {
       key: 'B' as const,
-      name: 'Option B',
+      name: 'Option 2 (B)',
       shortcut: '→ / [2]',
       text: fastModeGroup.optionB.text,
       gradient: 'from-teal-950/60 via-calm-900/95 to-calm-900/95',
@@ -67,7 +67,7 @@ export const FastModeScreen: React.FC = () => {
     },
     {
       key: 'C' as const,
-      name: 'Option C',
+      name: 'Option 3 (C)',
       shortcut: '↓ / [3]',
       text: fastModeGroup.optionC.text,
       gradient: 'from-amber-950/60 via-calm-900/95 to-calm-900/95',
@@ -77,7 +77,7 @@ export const FastModeScreen: React.FC = () => {
     },
     {
       key: 'D' as const,
-      name: 'Option D',
+      name: 'Option 4 (D)',
       shortcut: '← / [4]',
       text: fastModeGroup.optionD.text,
       gradient: 'from-purple-950/60 via-calm-900/95 to-calm-900/95',

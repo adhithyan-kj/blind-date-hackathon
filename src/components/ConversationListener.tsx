@@ -57,10 +57,10 @@ export const ConversationListener: React.FC = () => {
   const latestTranscript = transcriptItems[0]?.text || null;
 
   const suggestionsList = [
-    { key: 'Option A', text: fastModeGroup.optionA.text, color: 'border-brand-500/40 hover:border-brand-400 bg-brand-950/20 text-brand-300' },
-    { key: 'Option B', text: fastModeGroup.optionB.text, color: 'border-teal-500/40 hover:border-teal-400 bg-teal-950/20 text-teal-300' },
-    { key: 'Option C', text: fastModeGroup.optionC.text, color: 'border-amber-500/40 hover:border-amber-400 bg-amber-950/20 text-amber-300' },
-    { key: 'Option D', text: fastModeGroup.optionD.text, color: 'border-purple-500/40 hover:border-purple-400 bg-purple-950/20 text-purple-300' },
+    { key: 'Option 1', text: fastModeGroup.optionA.text, color: 'border-brand-500/40 hover:border-brand-400 bg-brand-950/20 text-brand-300' },
+    { key: 'Option 2', text: fastModeGroup.optionB.text, color: 'border-teal-500/40 hover:border-teal-400 bg-teal-950/20 text-teal-300' },
+    { key: 'Option 3', text: fastModeGroup.optionC.text, color: 'border-amber-500/40 hover:border-amber-400 bg-amber-950/20 text-amber-300' },
+    { key: 'Option 4', text: fastModeGroup.optionD.text, color: 'border-purple-500/40 hover:border-purple-400 bg-purple-950/20 text-purple-300' },
   ];
 
   return (

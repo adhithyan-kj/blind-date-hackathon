@@ -134,9 +134,21 @@ export class RuleBasedSuggestionEngine implements SuggestionEngineInterface {
       return this.getDefaultSuggestions();
     }
 
-    // 1. Dynamic "A or B" extractor (e.g. "Do you prefer red or blue?", "Large or small?")
+    // 1. Specifically detect tea or coffee
+    const hasTea = /\btea\b/i.test(clean);
+    const hasCoffee = /\bcoffee\b/i.test(clean);
+    if (hasTea || hasCoffee) {
+      return [
+        { id: `sug_${Date.now()}_1`, text: 'Tea, please.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.99 },
+        { id: `sug_${Date.now()}_2`, text: 'Coffee, please.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.96 },
+        { id: `sug_${Date.now()}_3`, text: 'Just water is fine, thank you.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.85 },
+        { id: `sug_${Date.now()}_4`, text: 'Neither, thank you.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.80 },
+      ];
+    }
+
+    // 2. Dynamic "A or B" extractor (e.g. "Do you prefer red or blue?", "Large or small?")
     const choiceMatch = clean.match(/\b([a-zA-Z]+)\s+or\s+([a-zA-Z]+)\b/i);
-    if (choiceMatch && !clean.match(/\b(tea|coffee|cash|card)\b/i)) {
+    if (choiceMatch) {
       const firstOpt = choiceMatch[1].charAt(0).toUpperCase() + choiceMatch[1].slice(1).toLowerCase();
       const secondOpt = choiceMatch[2].charAt(0).toUpperCase() + choiceMatch[2].slice(1).toLowerCase();
       return [
@@ -147,7 +159,7 @@ export class RuleBasedSuggestionEngine implements SuggestionEngineInterface {
       ];
     }
 
-    // 2. Check predefined rules
+    // 3. Check predefined rules
     for (const rule of RULE_BASED_PATTERNS) {
       if (rule.pattern.test(clean)) {
         return rule.options.map((optText, index) => ({
