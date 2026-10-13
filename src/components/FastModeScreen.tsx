@@ -20,7 +20,7 @@ import {
 
 export const FastModeScreen: React.FC = () => {
   const {
-    fastModePair,
+    fastModeGroup,
     speakText,
     stopSpeaking,
     isSpeaking,
@@ -35,18 +35,60 @@ export const FastModeScreen: React.FC = () => {
     showToast,
   } = useApp();
 
-  const [previewMode, setPreviewMode] = useState<boolean>(false);
-
-  const handleSelectOptionA = () => {
-    inputController.triggerOptionA('screen_tap');
+  const handleSelectOption = (key: 'A' | 'B' | 'C' | 'D') => {
+    switch (key) {
+      case 'A': inputController.triggerOptionA('screen_tap'); break;
+      case 'B': inputController.triggerOptionB('screen_tap'); break;
+      case 'C': inputController.triggerOptionC('screen_tap'); break;
+      case 'D': inputController.triggerOptionD('screen_tap'); break;
+    }
   };
 
-  const handleSelectOptionB = () => {
-    inputController.triggerOptionB('screen_tap');
-  };
+  const cardList = [
+    {
+      key: 'A' as const,
+      name: 'Option A',
+      shortcut: '↑ / [1]',
+      text: fastModeGroup.optionA.text,
+      gradient: 'from-brand-900/60 via-calm-900/95 to-calm-900/95',
+      borderColor: 'border-brand-500/50 hover:border-brand-400 focus:ring-brand-500/30',
+      badgeBg: 'bg-brand-500 text-white',
+      accentColor: 'text-brand-300',
+    },
+    {
+      key: 'B' as const,
+      name: 'Option B',
+      shortcut: '→ / [2]',
+      text: fastModeGroup.optionB.text,
+      gradient: 'from-teal-950/60 via-calm-900/95 to-calm-900/95',
+      borderColor: 'border-teal-500/50 hover:border-teal-400 focus:ring-teal-500/30',
+      badgeBg: 'bg-teal-600 text-white',
+      accentColor: 'text-teal-300',
+    },
+    {
+      key: 'C' as const,
+      name: 'Option C',
+      shortcut: '↓ / [3]',
+      text: fastModeGroup.optionC.text,
+      gradient: 'from-amber-950/60 via-calm-900/95 to-calm-900/95',
+      borderColor: 'border-amber-500/50 hover:border-amber-400 focus:ring-amber-500/30',
+      badgeBg: 'bg-amber-600 text-white',
+      accentColor: 'text-amber-300',
+    },
+    {
+      key: 'D' as const,
+      name: 'Option D',
+      shortcut: '← / [4]',
+      text: fastModeGroup.optionD.text,
+      gradient: 'from-purple-950/60 via-calm-900/95 to-calm-900/95',
+      borderColor: 'border-purple-500/50 hover:border-purple-400 focus:ring-purple-500/30',
+      badgeBg: 'bg-purple-600 text-white',
+      accentColor: 'text-purple-300',
+    },
+  ];
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-between py-2 sm:py-4 px-2 sm:px-4 max-w-4xl mx-auto w-full">
+    <div className="min-h-[85vh] flex flex-col justify-between py-2 sm:py-4 px-2 sm:px-4 max-w-5xl mx-auto w-full">
       {/* Fast Mode Header Controls */}
       <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b border-calm-800/60">
         <div className="flex items-center gap-2">
@@ -55,7 +97,7 @@ export const FastModeScreen: React.FC = () => {
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              Fast Mode
+              Fast Mode (4 Quick Choices)
               {isUpdatingSuggestions && (
                 <span className="text-xs text-amber-400 font-normal animate-pulse">
                   (updating...)
@@ -63,7 +105,7 @@ export const FastModeScreen: React.FC = () => {
               )}
             </h2>
             <p className="text-xs text-calm-400">
-              Instant 2-choice tactile communicator
+              Instant tactile communicator • Tap or press numbers 1-4
             </p>
           </div>
         </div>
@@ -110,108 +152,92 @@ export const FastModeScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Primary 2-Option Huge Tap Targets */}
-      <div className="flex-1 grid grid-rows-2 gap-4 sm:gap-6 my-2 sm:my-4">
-        {/* OPTION A */}
-        <button
-          onClick={handleSelectOptionA}
-          className="relative group w-full rounded-3xl p-6 sm:p-10 flex flex-col justify-between items-start text-left bg-gradient-to-br from-brand-900/60 via-calm-900/90 to-calm-900/90 border-2 border-brand-500/50 hover:border-brand-400 active:scale-[0.985] shadow-card hover:shadow-elevated transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-brand-500/30"
-          aria-label={`Option A: ${fastModePair.optionA.text}. Tap or press Up Arrow.`}
-        >
-          {/* Card Badges */}
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-xl bg-brand-500 text-white font-extrabold text-sm sm:text-base tracking-wider uppercase shadow-sm">
-                Option A
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-calm-800 text-calm-300 text-xs font-mono border border-calm-700">
-                <ArrowUp className="w-3.5 h-3.5 text-brand-400" /> Up Arrow / [1]
-              </span>
+      {/* 4-Option Grid */}
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 my-2 sm:my-3">
+        {cardList.map((card) => (
+          <button
+            key={card.key}
+            onClick={() => handleSelectOption(card.key)}
+            className={`relative group w-full rounded-2xl sm:rounded-3xl p-5 sm:p-7 flex flex-col justify-between items-start text-left bg-gradient-to-br ${card.gradient} border-2 ${card.borderColor} active:scale-[0.985] shadow-card hover:shadow-elevated transition-all cursor-pointer focus:outline-none focus:ring-4`}
+            aria-label={`${card.name}: ${card.text}. Tap or press key ${card.shortcut}.`}
+          >
+            {/* Header row */}
+            <div className="w-full flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className={`px-2.5 py-0.5 rounded-lg font-extrabold text-xs sm:text-sm uppercase tracking-wider ${card.badgeBg}`}>
+                  {card.name}
+                </span>
+                <span className="hidden xs:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-calm-800/90 text-calm-300 text-xs font-mono border border-calm-700/60">
+                  Key {card.shortcut}
+                </span>
+              </div>
+              <div className={`flex items-center gap-1 text-xs font-medium ${card.accentColor}`}>
+                <Volume2 className="w-4 h-4" />
+                <span>Tap to Speak</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-brand-300 font-medium">
-              <Volume2 className="w-4 h-4 text-brand-400" />
-              <span>Tap to Speak</span>
+
+            {/* Main Text */}
+            <div className="my-auto py-2">
+              <p className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-snug">
+                "{card.text}"
+              </p>
             </div>
-          </div>
 
-          {/* Big Text */}
-          <div className="my-auto py-2">
-            <p className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight sm:leading-snug">
-              {fastModePair.optionA.text}
-            </p>
-          </div>
-
-          {/* Footer cue */}
-          <div className="w-full flex items-center justify-between text-xs sm:text-sm text-calm-400 pt-2 border-t border-brand-500/20">
-            <span>Primary confirmation</span>
-            <span className="text-brand-400 font-semibold group-hover:underline">Select & Speak →</span>
-          </div>
-        </button>
-
-        {/* OPTION B */}
-        <button
-          onClick={handleSelectOptionB}
-          className="relative group w-full rounded-3xl p-6 sm:p-10 flex flex-col justify-between items-start text-left bg-gradient-to-br from-indigo-950/60 via-calm-900/90 to-calm-900/90 border-2 border-indigo-500/50 hover:border-indigo-400 active:scale-[0.985] shadow-card hover:shadow-elevated transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-500/30"
-          aria-label={`Option B: ${fastModePair.optionB.text}. Tap or press Down Arrow.`}
-        >
-          {/* Card Badges */}
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-xl bg-indigo-600 text-white font-extrabold text-sm sm:text-base tracking-wider uppercase shadow-sm">
-                Option B
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-calm-800 text-calm-300 text-xs font-mono border border-calm-700">
-                <ArrowDown className="w-3.5 h-3.5 text-indigo-400" /> Down Arrow / [2]
+            {/* Footer cue */}
+            <div className="w-full flex items-center justify-between text-xs text-calm-400 pt-2 border-t border-calm-800/40">
+              <span>Instant audio feedback</span>
+              <span className={`${card.accentColor} font-semibold group-hover:underline`}>
+                Select & Speak →
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-indigo-300 font-medium">
-              <Volume2 className="w-4 h-4 text-indigo-400" />
-              <span>Tap to Speak</span>
-            </div>
-          </div>
-
-          {/* Big Text */}
-          <div className="my-auto py-2">
-            <p className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight sm:leading-snug">
-              {fastModePair.optionB.text}
-            </p>
-          </div>
-
-          {/* Footer cue */}
-          <div className="w-full flex items-center justify-between text-xs sm:text-sm text-calm-400 pt-2 border-t border-indigo-500/20">
-            <span>Alternative confirmation</span>
-            <span className="text-indigo-400 font-semibold group-hover:underline">Select & Speak →</span>
-          </div>
-        </button>
+          </button>
+        ))}
       </div>
 
       {/* Bottom Hardware Simulation & Safety Bar */}
       <div className="pt-2 border-t border-calm-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-calm-400">
-        {/* Android Volume Key Test Simulator */}
-        <div className="flex items-center gap-2">
+        {/* Hardware Keys Test Simulator */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className="flex items-center gap-1 text-calm-300 font-medium">
             <Smartphone className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Simulate Hardware Volume Keys:</span>
+            <span className="hidden sm:inline">Simulate Hardware / Switch Controls:</span>
           </span>
           <button
             onClick={() => {
               inputController.dispatch({ action: 'SELECT_A', source: 'hardware_volume' });
-              showToast('Hardware Volume UP triggered Option A', 'success');
+              showToast('Hardware 1 triggered Option A', 'success');
             }}
-            className="px-2.5 py-1.5 rounded-lg bg-calm-800 hover:bg-calm-700 text-calm-200 border border-calm-700 font-mono active:scale-95"
-            title="Simulates hardware Volume-Up button press"
+            className="px-2 py-1 rounded bg-calm-800 hover:bg-calm-700 text-calm-200 border border-calm-700 font-mono active:scale-95 text-[11px]"
           >
-            Vol ▲ (Opt A)
+            [1] Opt A
           </button>
           <button
             onClick={() => {
               inputController.dispatch({ action: 'SELECT_B', source: 'hardware_volume' });
-              showToast('Hardware Volume DOWN triggered Option B', 'success');
+              showToast('Hardware 2 triggered Option B', 'success');
             }}
-            className="px-2.5 py-1.5 rounded-lg bg-calm-800 hover:bg-calm-700 text-calm-200 border border-calm-700 font-mono active:scale-95"
-            title="Simulates hardware Volume-Down button press"
+            className="px-2 py-1 rounded bg-calm-800 hover:bg-calm-700 text-calm-200 border border-calm-700 font-mono active:scale-95 text-[11px]"
           >
-            Vol ▼ (Opt B)
+            [2] Opt B
+          </button>
+          <button
+            onClick={() => {
+              inputController.dispatch({ action: 'SELECT_C', source: 'hardware_volume' });
+              showToast('Hardware 3 triggered Option C', 'success');
+            }}
+            className="px-2 py-1 rounded bg-calm-800 hover:bg-calm-700 text-calm-200 border border-calm-700 font-mono active:scale-95 text-[11px]"
+          >
+            [3] Opt C
+          </button>
+          <button
+            onClick={() => {
+              inputController.dispatch({ action: 'SELECT_D', source: 'hardware_volume' });
+              showToast('Hardware 4 triggered Option D', 'success');
+            }}
+            className="px-2 py-1 rounded bg-calm-800 hover:bg-calm-700 text-calm-200 border border-calm-700 font-mono active:scale-95 text-[11px]"
+          >
+            [4] Opt D
           </button>
         </div>
 
@@ -230,7 +256,7 @@ export const FastModeScreen: React.FC = () => {
 
           <button
             onClick={() => setActiveScreen('main')}
-            className="px-3 py-1.5 rounded-xl bg-calm-800 hover:bg-calm-700 text-calm-300 hover:text-white border border-calm-700"
+            className="px-3 py-1.5 rounded-xl bg-calm-800 hover:bg-calm-700 text-calm-300 hover:text-white border border-calm-700 font-medium"
           >
             Back to Keyboard
           </button>
