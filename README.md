@@ -3,10 +3,6 @@
 > **An assistive voice companion for people who stammer.**  
 > It listens to the other person in a conversation and instantly gives you **4 quick responses** to speak aloud with one tap.
 
-[![Blind Date Hackathon](https://img.shields.io/badge/Hackathon-Blind%20Date%20Hackathon-6366f1.svg)]()
-[![Privacy](https://img.shields.io/badge/Privacy-100%25%20On--Device-emerald.svg)]()
-[![Platform](https://img.shields.io/badge/Stack-Next.js%20%7C%20TypeScript%20%7C%20Tailwind-blue.svg)]()
-
 ---
 
 ## 🎯 How It Meets Hackathon Judging Criteria
@@ -47,7 +43,7 @@
 
 ---
 
-## ⏱️ 60-Second Demo Walkthrough for Judges
+## Demo Walkthrough
 
 1. **Open the App:** You will see the friendly 5-step guided tour (click **Skip Tour** or **Next**).
 2. **Test Speech Output:** Type anything into the main box and tap **Speak Aloud**. Tap **Stop Speaking** to cancel.
@@ -84,3 +80,9 @@ UnMute's code is decoupled from the screen. In an Android wrapper (Capacitor/Web
 ---
 
 **Team:** UnMute • **Event:** Blind Date Hackathon • **License:** MIT
+
+Team 2
+Adhithyan K J - S5CSEA
+Aysha Misna - S! CSEA
+
+`Blind date hackathon 2026
