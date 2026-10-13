@@ -51,6 +51,9 @@ export const MainCommunicationScreen: React.FC = () => {
             <span>Type or Select Text to Speak</span>
           </label>
           <div className="flex items-center gap-2">
+            <span className="hidden sm:inline text-[11px] text-amber-400/90 font-medium bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              💡 Hint: Tap Speak or select phrases below
+            </span>
             {settings.rate && (
               <span className="bg-calm-800 px-2 py-0.5 rounded text-[11px] text-calm-400">
                 Speed: {settings.rate}x

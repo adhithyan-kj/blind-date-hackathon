@@ -11,6 +11,7 @@ import {
   Volume2,
   VolumeX,
   Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -24,6 +25,7 @@ export const Header: React.FC = () => {
     isFastModeActive,
     toggleFastMode,
     setIsSettingsOpen,
+    setIsTutorialOpen,
     isSpeaking,
     stopSpeaking,
   } = useApp();
@@ -145,11 +147,21 @@ export const Header: React.FC = () => {
                 ? 'bg-brand-500 text-white border-brand-400 shadow-md shadow-brand-500/25'
                 : 'bg-calm-900/80 border-calm-700/60 text-calm-200 hover:border-brand-500/50'
             }`}
-            aria-label="Toggle Fast Mode 2-Option View"
-            title="Fast Mode: 2 large instant response cards"
+            aria-label="Toggle Fast Mode 4-Choice View"
+            title="Fast Mode: 4 large instant response cards"
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
             <span>Fast Mode</span>
+          </button>
+
+          {/* Tour / Help Button */}
+          <button
+            onClick={() => setIsTutorialOpen(true)}
+            className="p-2 rounded-xl text-calm-300 hover:text-white hover:bg-calm-800/60 border border-transparent hover:border-calm-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400"
+            aria-label="Open App Tour and Guide"
+            title="Help Tour & Tutorial"
+          >
+            <HelpCircle className="w-5 h-5 text-amber-400" />
           </button>
 
           {/* Settings Modal Button */}
