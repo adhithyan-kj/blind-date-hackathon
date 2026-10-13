@@ -9,6 +9,7 @@ import { ConversationListener } from '../src/components/ConversationListener';
 import { PhraseLibrary } from '../src/components/PhraseLibrary';
 import { FastModeScreen } from '../src/components/FastModeScreen';
 import { SettingsModal } from '../src/components/SettingsModal';
+import { TutorialModal } from '../src/components/TutorialModal';
 import { Toast } from '../src/components/Toast';
 import { ShieldCheck, Sparkles, HeartHandshake } from 'lucide-react';
 
@@ -51,6 +52,9 @@ export default function Home() {
 
       {/* Settings Modal */}
       <SettingsModal />
+
+      {/* Interactive Onboarding Tour Modal */}
+      <TutorialModal />
 
       {/* Accessible Action Toast */}
       <Toast />
