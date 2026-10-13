@@ -23,9 +23,61 @@ export async function POST(req: NextRequest) {
     }
 
     const clean = utterance.trim();
+    const fastrouterKey = process.env.FASTROUTER_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
 
-    // 1. Groq Ultra-Fast AI Generation
+    // 1. FastRouter AI Gateway
+    if (fastrouterKey) {
+      try {
+        const frRes = await fetch('https://api.fastrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${fastrouterKey}`,
+          },
+          body: JSON.stringify({
+            model: 'fastrouter/auto',
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an AAC assistive communication AI for someone who stammers. The user needs to tap 1 of 4 short speech buttons to respond to a conversation partner. When given what the partner said, output EXACTLY a JSON array of 4 short, realistic, first-person reply strings: Option 1 (direct answer/preference), Option 2 (alternative answer/choice), Option 3 (neutral/clarification/polite follow-up), Option 4 (polite decline or asking for time). If they ask "tea or coffee", option 1 must be "Tea, please." and option 2 must be "Coffee, please.". Return ONLY the JSON array like ["Tea, please.", "Coffee, please.", "Just water, thank you.", "Neither for me right now."].',
+              },
+              {
+                role: 'user',
+                content: clean,
+              },
+            ],
+            temperature: 0.2,
+            max_tokens: 150,
+          }),
+        });
+
+        if (frRes.ok) {
+          const data = await frRes.json();
+          const content = data.choices?.[0]?.message?.content || '';
+          const match = content.match(/\[[\s\S]*\]/);
+          if (match) {
+            const parsedArray = JSON.parse(match[0]);
+            if (Array.isArray(parsedArray) && parsedArray.length >= 4) {
+              const suggestions: SuggestionResult[] = parsedArray.slice(0, 4).map((item, idx) => ({
+                id: `fr_${Date.now()}_${idx + 1}`,
+                text: String(item).trim().replace(/^["']|["']$/g, ''),
+                sourceIntent: 'fastrouter_ai',
+                relevanceScore: 0.99 - idx * 0.05,
+              }));
+              return NextResponse.json({ suggestions, model: `fastrouter:${data.model || 'auto'}` });
+            }
+          }
+        } else {
+          console.warn('FastRouter response not ok:', frRes.status, await frRes.text());
+        }
+      } catch (frErr) {
+        console.warn('FastRouter call failed:', frErr);
+      }
+    }
+
+    // 2. Groq Ultra-Fast AI Generation
     if (groqKey) {
       try {
         const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
