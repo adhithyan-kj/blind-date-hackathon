@@ -112,6 +112,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const lastUpdateRef = useRef<number>(Date.now());
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const latestRequestIdRef = useRef<number>(0);
+  const liveDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const showToast = useCallback((text: string, type: 'info' | 'success' | 'warn' | 'error' = 'info') => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -295,10 +297,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Conversation Utterance Processing
   const processIncomingUtterance = useCallback(
     async (utteranceText: string, isSimulated = false) => {
+      const clean = utteranceText ? utteranceText.trim() : '';
+      if (!clean) return;
+
       const newItem: TranscriptItem = {
         id: `trans_${Date.now()}`,
         speaker: 'partner',
-        text: utteranceText,
+        text: clean,
         timestamp: Date.now(),
         isFinal: true,
         isSimulated,
@@ -317,15 +322,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
+      // Cancel any pending debounced live updates from interim speech
+      if (liveDebounceRef.current) {
+        clearTimeout(liveDebounceRef.current);
+        liveDebounceRef.current = null;
+      }
+
+      const requestId = ++latestRequestIdRef.current;
+
+      // 1. Instant 0ms local heuristic generation for zero lag
+      try {
+        const instantGroup = activeSuggestionEngine.generateInstantLocalGroup(clean);
+        // If instant group found specific matches (e.g., tea/coffee or dynamic choice), set immediately
+        if (instantGroup.optionA.text !== 'Yes, that sounds great.') {
+          setFastModeGroup(instantGroup);
+        }
+      } catch {
+        // Continue to AI
+      }
+
       setIsUpdatingSuggestions(true);
       try {
-        const newGroup = await activeSuggestionEngine.generateFastModeGroup(utteranceText);
-        setFastModeGroup(newGroup);
-        lastUpdateRef.current = Date.now();
+        const aiGroup = await activeSuggestionEngine.generateFastModeGroup(clean);
+        // Only apply if this request is still the newest one
+        if (requestId === latestRequestIdRef.current) {
+          // Never overwrite specific suggestions with a generic fallback
+          setFastModeGroup((current) => {
+            if (
+              aiGroup.optionA.text === 'Yes, that sounds great.' &&
+              current.optionA.text !== 'Yes, that sounds great.'
+            ) {
+              return current;
+            }
+            return aiGroup;
+          });
+          lastUpdateRef.current = Date.now();
+        }
       } catch (err) {
         console.error('Failed to generate suggestions:', err);
       } finally {
-        setIsUpdatingSuggestions(false);
+        if (requestId === latestRequestIdRef.current) {
+          setIsUpdatingSuggestions(false);
+        }
       }
     },
     [isFrozen, settings.saveTranscriptsLocally]
@@ -334,17 +372,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Live real-time suggestion update for live detected speech or typing
   const updateLiveSuggestions = useCallback(
     async (text: string) => {
-      if (isFrozen || !text || !text.trim()) return;
+      const clean = text ? text.trim() : '';
+      if (isFrozen || !clean) return;
+
+      const requestId = ++latestRequestIdRef.current;
+
+      // 1. Instant 0ms local response on interim text
       try {
-        setIsUpdatingSuggestions(true);
-        const newGroup = await activeSuggestionEngine.generateFastModeGroup(text.trim());
-        setFastModeGroup(newGroup);
-        lastUpdateRef.current = Date.now();
-      } catch (err) {
-        console.error('Error updating live suggestions:', err);
-      } finally {
-        setIsUpdatingSuggestions(false);
+        const instantGroup = activeSuggestionEngine.generateInstantLocalGroup(clean);
+        if (instantGroup.optionA.text !== 'Yes, that sounds great.') {
+          setFastModeGroup(instantGroup);
+        }
+      } catch {
+        // ignore
       }
+
+      // Debounce AI network calls while speaking/typing
+      if (liveDebounceRef.current) {
+        clearTimeout(liveDebounceRef.current);
+      }
+
+      liveDebounceRef.current = setTimeout(async () => {
+        if (requestId !== latestRequestIdRef.current) return;
+        setIsUpdatingSuggestions(true);
+        try {
+          const aiGroup = await activeSuggestionEngine.generateFastModeGroup(clean);
+          if (requestId === latestRequestIdRef.current) {
+            setFastModeGroup((current) => {
+              if (
+                aiGroup.optionA.text === 'Yes, that sounds great.' &&
+                current.optionA.text !== 'Yes, that sounds great.'
+              ) {
+                return current;
+              }
+              return aiGroup;
+            });
+            lastUpdateRef.current = Date.now();
+          }
+        } catch (err) {
+          console.error('Error updating live suggestions:', err);
+        } finally {
+          if (requestId === latestRequestIdRef.current) {
+            setIsUpdatingSuggestions(false);
+          }
+        }
+      }, 250);
     },
     [isFrozen]
   );
@@ -358,14 +430,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (message) setListeningMessage(message);
       },
       onTranscript: (text, isFinal) => {
+        const clean = text ? text.trim() : '';
+        if (!clean) return;
+
         if (isFinal) {
+          if (liveDebounceRef.current) clearTimeout(liveDebounceRef.current);
           setInterimTranscript('');
-          processIncomingUtterance(text);
+          processIncomingUtterance(clean);
         } else {
-          setInterimTranscript(text);
-          if (text.trim()) {
-            updateLiveSuggestions(text);
-          }
+          setInterimTranscript(clean);
+          updateLiveSuggestions(clean);
         }
       },
       onError: (err) => {

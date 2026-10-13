@@ -197,6 +197,83 @@ export class RuleBasedSuggestionEngine implements SuggestionEngineInterface {
     ];
   }
 
+  public generateInstantLocalGroup(utterance: string): SuggestionGroup {
+    const clean = utterance.trim();
+    if (!clean) {
+      return this.getDefaultGroup();
+    }
+
+    // 1. Specifically detect tea or coffee (single, dual, or comparative)
+    const hasTea = /\btea\b/i.test(clean);
+    const hasCoffee = /\bcoffee\b/i.test(clean);
+    if (hasTea && hasCoffee) {
+      const coffeeFirst = clean.toLowerCase().indexOf('coffee') < clean.toLowerCase().indexOf('tea');
+      return {
+        optionA: { id: 'inst_1', text: coffeeFirst ? 'Coffee, please.' : 'Tea, please.' },
+        optionB: { id: 'inst_2', text: coffeeFirst ? 'Tea, please.' : 'Coffee, please.' },
+        optionC: { id: 'inst_3', text: 'Just water is fine, thank you.' },
+        optionD: { id: 'inst_4', text: 'Neither, thank you.' },
+        timestamp: Date.now(),
+      };
+    } else if (hasTea) {
+      return {
+        optionA: { id: 'inst_1', text: 'Tea, please.' },
+        optionB: { id: 'inst_2', text: 'Coffee, please.' },
+        optionC: { id: 'inst_3', text: 'Yes, that would be lovely.' },
+        optionD: { id: 'inst_4', text: 'No thank you, I am good.' },
+        timestamp: Date.now(),
+      };
+    } else if (hasCoffee) {
+      return {
+        optionA: { id: 'inst_1', text: 'Coffee, please.' },
+        optionB: { id: 'inst_2', text: 'Tea, please.' },
+        optionC: { id: 'inst_3', text: 'Yes, that would be lovely.' },
+        optionD: { id: 'inst_4', text: 'No thank you, I am good.' },
+        timestamp: Date.now(),
+      };
+    }
+
+    // 2. Dynamic "A or B"
+    const choiceMatch = clean.match(/\b([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\s+(?:or|\/)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\b/i);
+    if (choiceMatch) {
+      const formatOpt = (str: string) => str.trim().charAt(0).toUpperCase() + str.trim().slice(1);
+      const firstOpt = formatOpt(choiceMatch[1]);
+      const secondOpt = formatOpt(choiceMatch[2]);
+      return {
+        optionA: { id: 'inst_1', text: `${firstOpt}, please.` },
+        optionB: { id: 'inst_2', text: `${secondOpt}, please.` },
+        optionC: { id: 'inst_3', text: 'Either one is fine with me.' },
+        optionD: { id: 'inst_4', text: 'Neither, thank you.' },
+        timestamp: Date.now(),
+      };
+    }
+
+    // 3. Predefined rules
+    for (const rule of RULE_BASED_PATTERNS) {
+      if (rule.pattern.test(clean)) {
+        return {
+          optionA: { id: 'inst_1', text: rule.options[0] },
+          optionB: { id: 'inst_2', text: rule.options[1] },
+          optionC: { id: 'inst_3', text: rule.options[2] },
+          optionD: { id: 'inst_4', text: rule.options[3] },
+          timestamp: Date.now(),
+        };
+      }
+    }
+
+    return this.getDefaultGroup();
+  }
+
+  public getDefaultGroup(): SuggestionGroup {
+    return {
+      optionA: { id: 'def_1', text: 'Yes, that sounds great.' },
+      optionB: { id: 'def_2', text: 'No, thank you.' },
+      optionC: { id: 'def_3', text: 'Please give me a moment.' },
+      optionD: { id: 'def_4', text: 'Could you please repeat that?' },
+      timestamp: Date.now(),
+    };
+  }
+
   public async generateFastModeGroup(utterance: string): Promise<SuggestionGroup> {
     const suggestions = await this.generateSuggestions(utterance);
     return {
@@ -227,25 +304,37 @@ export class RuleBasedSuggestionEngine implements SuggestionEngineInterface {
 export class BackendAISuggestionEngine implements SuggestionEngineInterface {
   public providerName = 'External AI Assistance (Secure Proxy)';
   private apiEndpoint: string;
+  private localFallback = new RuleBasedSuggestionEngine();
 
   constructor(apiEndpoint: string = '/api/suggestions') {
     this.apiEndpoint = apiEndpoint;
   }
 
+  public generateInstantLocalGroup(utterance: string): SuggestionGroup {
+    return this.localFallback.generateInstantLocalGroup(utterance);
+  }
+
   public async generateSuggestions(utterance: string): Promise<Suggestion[]> {
+    const clean = utterance.trim();
+    if (!clean) {
+      return this.localFallback.generateSuggestions('');
+    }
+
     try {
       const res = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ utterance }),
+        body: JSON.stringify({ utterance: clean }),
       });
       if (!res.ok) throw new Error('AI suggestion request failed');
       const data = await res.json();
-      return data.suggestions || [];
+      if (Array.isArray(data.suggestions) && data.suggestions.length >= 4) {
+        return data.suggestions;
+      }
+      throw new Error('Invalid suggestion payload');
     } catch {
       // Fallback seamlessly to local rule-based engine on network/API failure
-      const fallback = new RuleBasedSuggestionEngine();
-      return fallback.generateSuggestions(utterance);
+      return this.localFallback.generateSuggestions(clean);
     }
   }
 

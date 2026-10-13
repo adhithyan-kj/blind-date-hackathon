@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Mic,
@@ -14,6 +14,7 @@ import {
   Send,
   HelpCircle,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 
 const SAMPLE_CONVERSATION_PROMPTS = [
@@ -46,6 +47,23 @@ export const ConversationListener: React.FC = () => {
 
   const [simulatedText, setSimulatedText] = useState('');
   const [showSimSection, setShowSimSection] = useState(false);
+  const [displayedSpeech, setDisplayedSpeech] = useState<string | null>(null);
+  const speechClearTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const text = transcriptItems[0]?.text;
+    if (text) {
+      setDisplayedSpeech(text);
+      if (speechClearTimerRef.current) clearTimeout(speechClearTimerRef.current);
+      // Automatically clear recognized speech 4.5 seconds after sentence finishes to prime for next speech
+      speechClearTimerRef.current = setTimeout(() => {
+        setDisplayedSpeech(null);
+      }, 4500);
+    }
+    return () => {
+      if (speechClearTimerRef.current) clearTimeout(speechClearTimerRef.current);
+    };
+  }, [transcriptItems]);
 
   const handleSimulateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +72,6 @@ export const ConversationListener: React.FC = () => {
       setSimulatedText('');
     }
   };
-
-  const latestTranscript = transcriptItems[0]?.text || null;
 
   const suggestionsList = [
     { key: 'Option 1', text: fastModeGroup.optionA.text, color: 'border-brand-500/40 hover:border-brand-400 bg-brand-950/20 text-brand-300' },
@@ -140,14 +156,19 @@ export const ConversationListener: React.FC = () => {
           )}
         </div>
 
-        {latestTranscript ? (
-          <p className="text-calm-100 font-medium italic">
-            "{latestTranscript}"
-          </p>
-        ) : interimTranscript ? (
+        {interimTranscript ? (
           <p className="text-brand-300 font-medium italic animate-pulse">
             "{interimTranscript}..."
           </p>
+        ) : displayedSpeech ? (
+          <div className="flex items-center justify-between">
+            <p className="text-calm-100 font-medium italic">
+              "{displayedSpeech}"
+            </p>
+            <span className="text-[10px] text-calm-500 bg-calm-900/60 px-1.5 py-0.5 rounded border border-calm-800">
+              Auto-clearing for next sentence
+            </span>
+          </div>
         ) : (
           <p className="text-calm-500 italic text-xs">
             {listeningStatus === 'listening'
@@ -164,18 +185,35 @@ export const ConversationListener: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5 text-brand-400" />
             4 Dynamic Suggested Replies:
           </span>
-          <span className="text-[11px] text-calm-500">Tap to speak or edit any choice</span>
+          <span className="text-[11px] text-calm-500 flex items-center gap-1">
+            {isUpdatingSuggestions ? (
+              <span className="text-brand-400 animate-pulse flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Refining with AI...
+              </span>
+            ) : (
+              'Tap to speak or edit any choice'
+            )}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {suggestionsList.map((item, idx) => (
             <div
               key={idx}
-              className={`p-3.5 rounded-xl bg-calm-800/70 hover:bg-calm-800 border transition-all flex flex-col justify-between group ${item.color}`}
+              className={`p-3.5 rounded-xl bg-calm-800/70 hover:bg-calm-800 border transition-all duration-200 flex flex-col justify-between group relative overflow-hidden ${item.color} ${
+                isUpdatingSuggestions ? 'ring-1 ring-brand-500/30' : ''
+              }`}
             >
+              {isUpdatingSuggestions && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
+              )}
               <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-calm-900/60 border border-calm-700/50">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-calm-900/60 border border-calm-700/50 flex items-center gap-1">
                   {item.key}
+                  {isUpdatingSuggestions && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-ping" />
+                  )}
                 </span>
                 <button
                   onClick={() => setActiveInputText(item.text)}
@@ -185,7 +223,7 @@ export const ConversationListener: React.FC = () => {
                   Edit
                 </button>
               </div>
-              <p className="text-sm sm:text-base font-semibold text-white mb-3 leading-snug">
+              <p className="text-sm sm:text-base font-semibold text-white mb-3 leading-snug transition-all">
                 "{item.text}"
               </p>
               <button
