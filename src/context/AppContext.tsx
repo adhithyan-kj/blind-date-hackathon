@@ -65,6 +65,7 @@ interface AppContextType {
   deletePhrase: (id: string) => void;
   togglePinPhrase: (id: string) => void;
   simulateIncomingUtterance: (text: string) => Promise<void>;
+  updateLiveSuggestions: (text: string) => Promise<void>;
   clearTranscripts: () => void;
   resetAllData: () => void;
   setIsSettingsOpen: (open: boolean) => void;
@@ -316,24 +317,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
-      // Stability delay handling: prevent options from swapping right under the user's fingers
-      const now = Date.now();
-      const elapsed = now - lastUpdateRef.current;
-      const delay = Math.max(0, settings.autoModeStabilityDelayMs - elapsed);
-
       setIsUpdatingSuggestions(true);
-
-      setTimeout(async () => {
-        try {
-          const newGroup = await activeSuggestionEngine.generateFastModeGroup(utteranceText);
-          setFastModeGroup(newGroup);
-          lastUpdateRef.current = Date.now();
-        } finally {
-          setIsUpdatingSuggestions(false);
-        }
-      }, delay > 0 ? 300 : 0);
+      try {
+        const newGroup = await activeSuggestionEngine.generateFastModeGroup(utteranceText);
+        setFastModeGroup(newGroup);
+        lastUpdateRef.current = Date.now();
+      } catch (err) {
+        console.error('Failed to generate suggestions:', err);
+      } finally {
+        setIsUpdatingSuggestions(false);
+      }
     },
-    [isFrozen, settings.autoModeStabilityDelayMs, settings.saveTranscriptsLocally]
+    [isFrozen, settings.saveTranscriptsLocally]
+  );
+
+  // Live real-time suggestion update for live detected speech or typing
+  const updateLiveSuggestions = useCallback(
+    async (text: string) => {
+      if (isFrozen || !text || !text.trim()) return;
+      try {
+        setIsUpdatingSuggestions(true);
+        const newGroup = await activeSuggestionEngine.generateFastModeGroup(text.trim());
+        setFastModeGroup(newGroup);
+        lastUpdateRef.current = Date.now();
+      } catch (err) {
+        console.error('Error updating live suggestions:', err);
+      } finally {
+        setIsUpdatingSuggestions(false);
+      }
+    },
+    [isFrozen]
   );
 
   // Speech Recognition Controls
@@ -350,6 +363,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           processIncomingUtterance(text);
         } else {
           setInterimTranscript(text);
+          if (text.trim()) {
+            updateLiveSuggestions(text);
+          }
         }
       },
       onError: (err) => {
@@ -360,7 +376,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!success && !speechRecognitionService.checkAvailability()) {
       showToast('Speech recognition unavailable. Try simulation mode below!', 'warn');
     }
-  }, [settings.language, processIncomingUtterance, showToast]);
+  }, [settings.language, processIncomingUtterance, updateLiveSuggestions, showToast]);
 
   const stopListening = useCallback(() => {
     speechRecognitionService.stopListening();
@@ -540,6 +556,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deletePhrase,
         togglePinPhrase,
         simulateIncomingUtterance,
+        updateLiveSuggestions,
         clearTranscripts,
         resetAllData,
         setIsSettingsOpen,

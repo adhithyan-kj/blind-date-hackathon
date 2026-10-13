@@ -37,6 +37,7 @@ export const ConversationListener: React.FC = () => {
     toggleFreezeSuggestions,
     isUpdatingSuggestions,
     simulateIncomingUtterance,
+    updateLiveSuggestions,
     speakText,
     setActiveInputText,
     clearTranscripts,
@@ -235,8 +236,14 @@ export const ConversationListener: React.FC = () => {
               <input
                 type="text"
                 value={simulatedText}
-                onChange={(e) => setSimulatedText(e.target.value)}
-                placeholder="Type partner speech (e.g., 'What would you like to drink?')..."
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSimulatedText(val);
+                  if (val.trim()) {
+                    updateLiveSuggestions(val);
+                  }
+                }}
+                placeholder="Type partner speech (e.g., 'Would you like tea or coffee?')..."
                 className="flex-1 bg-calm-900 border border-calm-700/80 rounded-xl px-3 py-2 text-xs text-calm-100 placeholder:text-calm-500 focus:outline-none focus:ring-1 focus:ring-brand-400"
               />
               <button

@@ -134,23 +134,40 @@ export class RuleBasedSuggestionEngine implements SuggestionEngineInterface {
       return this.getDefaultSuggestions();
     }
 
-    // 1. Specifically detect tea or coffee
+    // 1. Specifically detect tea or coffee (single, dual, or comparative)
     const hasTea = /\btea\b/i.test(clean);
     const hasCoffee = /\bcoffee\b/i.test(clean);
-    if (hasTea || hasCoffee) {
+    if (hasTea && hasCoffee) {
+      // If coffee is mentioned before tea in text
+      const coffeeFirst = clean.toLowerCase().indexOf('coffee') < clean.toLowerCase().indexOf('tea');
       return [
-        { id: `sug_${Date.now()}_1`, text: 'Tea, please.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.99 },
-        { id: `sug_${Date.now()}_2`, text: 'Coffee, please.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.96 },
+        { id: `sug_${Date.now()}_1`, text: coffeeFirst ? 'Coffee, please.' : 'Tea, please.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.99 },
+        { id: `sug_${Date.now()}_2`, text: coffeeFirst ? 'Tea, please.' : 'Coffee, please.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.96 },
         { id: `sug_${Date.now()}_3`, text: 'Just water is fine, thank you.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.85 },
         { id: `sug_${Date.now()}_4`, text: 'Neither, thank you.', sourceIntent: 'tea_coffee_choice', relevanceScore: 0.80 },
       ];
+    } else if (hasTea) {
+      return [
+        { id: `sug_${Date.now()}_1`, text: 'Tea, please.', sourceIntent: 'tea_detected', relevanceScore: 0.99 },
+        { id: `sug_${Date.now()}_2`, text: 'Coffee, please.', sourceIntent: 'tea_detected', relevanceScore: 0.94 },
+        { id: `sug_${Date.now()}_3`, text: 'Yes, that would be lovely.', sourceIntent: 'tea_detected', relevanceScore: 0.88 },
+        { id: `sug_${Date.now()}_4`, text: 'No thank you, I am good.', sourceIntent: 'tea_detected', relevanceScore: 0.80 },
+      ];
+    } else if (hasCoffee) {
+      return [
+        { id: `sug_${Date.now()}_1`, text: 'Coffee, please.', sourceIntent: 'coffee_detected', relevanceScore: 0.99 },
+        { id: `sug_${Date.now()}_2`, text: 'Tea, please.', sourceIntent: 'coffee_detected', relevanceScore: 0.94 },
+        { id: `sug_${Date.now()}_3`, text: 'Yes, that would be lovely.', sourceIntent: 'coffee_detected', relevanceScore: 0.88 },
+        { id: `sug_${Date.now()}_4`, text: 'No thank you, I am good.', sourceIntent: 'coffee_detected', relevanceScore: 0.80 },
+      ];
     }
 
-    // 2. Dynamic "A or B" extractor (e.g. "Do you prefer red or blue?", "Large or small?")
-    const choiceMatch = clean.match(/\b([a-zA-Z]+)\s+or\s+([a-zA-Z]+)\b/i);
+    // 2. Dynamic "A or B" / "A / B" extractor (e.g. "cash or card", "apple or banana", "red / blue")
+    const choiceMatch = clean.match(/\b([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\s+(?:or|\/)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\b/i);
     if (choiceMatch) {
-      const firstOpt = choiceMatch[1].charAt(0).toUpperCase() + choiceMatch[1].slice(1).toLowerCase();
-      const secondOpt = choiceMatch[2].charAt(0).toUpperCase() + choiceMatch[2].slice(1).toLowerCase();
+      const formatOpt = (str: string) => str.trim().charAt(0).toUpperCase() + str.trim().slice(1);
+      const firstOpt = formatOpt(choiceMatch[1]);
+      const secondOpt = formatOpt(choiceMatch[2]);
       return [
         { id: `sug_${Date.now()}_1`, text: `${firstOpt}, please.`, sourceIntent: 'dynamic_choice', relevanceScore: 0.95 },
         { id: `sug_${Date.now()}_2`, text: `${secondOpt}, please.`, sourceIntent: 'dynamic_choice', relevanceScore: 0.92 },
@@ -248,4 +265,4 @@ export class BackendAISuggestionEngine implements SuggestionEngineInterface {
   }
 }
 
-export const activeSuggestionEngine = new RuleBasedSuggestionEngine();
+export const activeSuggestionEngine = new BackendAISuggestionEngine('/api/suggestions');
