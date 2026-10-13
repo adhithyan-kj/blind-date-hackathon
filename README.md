@@ -34,24 +34,41 @@ UnMute is designed with an **assistive** ethos: it never treats stammering as a 
 - **Custom Phrases**: Fully personal user-created phrases.
 - *Full CRUD support*: Pin frequently used phrases, edit text, delete custom phrases, and choose between tap-to-speak or stage-to-edit.
 
-### 4. Conversation Listening & Smart Suggestions
+### 4. Conversation Listening & 4 Dynamic Suggestions
 - **Web Speech API Recognition**: Listens for partner speech with clear status indicators (*Off*, *Listening*, *Processing*, *Denied*, *Unavailable*).
 - **Privacy First**: Local on-device recognition—no raw audio recorded or sent to remote servers.
-- **Rule-Based Suggestion Matcher**: Extracts conversational intent for common queries:
-  - *"Would you like tea or coffee?"* ➔ Option A: *"Tea, please."*, Option B: *"Coffee, please."*
-  - *"Can you come tomorrow?"* ➔ Option A: *"Yes, I can make it."*, Option B: *"Sorry, I am busy then."*
-  - *"Cash or card?"* ➔ Option A: *"Card, please."*, Option B: *"Cash, please."*
-- **Offline / Zero-Mic Simulator**: Built-in interactive simulator to test suggestions with standard prompts or custom partner phrases without needing a microphone.
+- **Dynamic 4-Choice Suggestion Engine**: Extracts conversational intent and provides **4 tailored responses** (Option A, B, C, D) in real-time:
+  - *"Would you like tea or coffee?"* ➔
+    - Option A: *"Tea, please."*
+    - Option B: *"Coffee, please."*
+    - Option C: *"Just water is fine, thank you."*
+    - Option D: *"Neither for me right now."*
+  - *"Can you come tomorrow?"* ➔
+    - Option A: *"Yes, I can come."*
+    - Option B: *"Sorry, I am busy then."*
+    - Option C: *"Could we reschedule for later?"*
+    - Option D: *"Let me check and get back to you."*
+  - *"Cash or card?"* ➔
+    - Option A: *"Card, please."*
+    - Option B: *"Cash, please."*
+    - Option C: *"Do you accept UPI or contactless pay?"*
+    - Option D: *"Can I get a receipt, please?"*
+- **Offline / Zero-Mic Simulator**: Interactive simulation bar allowing instant testing of all 4 choices without a microphone.
 
-### 5. Fast Mode
-- **Dedicated 2-Choice Interface**: Large, high-visibility tactile cards displaying Option A and Option B.
-- **Physical Keyboard Support**: `ArrowUp` or `1` for Option A, `ArrowDown` or `2` for Option B, `Escape` to cancel.
-- **Hardware Button Decoupling**: Decoupled `InputController` ready for native mobile hardware bindings.
+### 5. Fast Mode (4 Giant Tactile Cards)
+- **High-Speed Tactile Interface**: Displays all 4 suggestions (A, B, C, D) on massive, high-contrast accessible buttons.
+- **Physical Keyboard Hotkeys**: Press <kbd>1</kbd> / <kbd>↑</kbd> for A, <kbd>2</kbd> / <kbd>→</kbd> for B, <kbd>3</kbd> / <kbd>↓</kbd> for C, <kbd>4</kbd> / <kbd>←</kbd> for D.
+- **Hardware Button Decoupling**: Decoupled `InputController` and bridge ready for native volume button mapping.
 
 ### 6. Automatic Mode & Stability Freeze
-- Continuously updates suggestions as new partner utterances are detected.
-- **Freeze Control**: Lets users lock the current options to prevent accidental taps.
+- Continuously updates the 4 suggestions as new partner utterances are detected.
+- **Freeze Control**: Lets users lock the current options to prevent accidental taps while reaching for a button.
 - **Configurable Stability Window**: Ensures suggestions do not swap at the exact instant a user touches the screen.
+
+### 7. Interactive Tutorial & UI Hints
+- **First-Time Tour Modal**: Guided, step-by-step walkthrough explaining instant speech, live listening, 4-choice replies, and fast mode.
+- **Skippable Anytime**: Users can skip with one click or reopen it whenever they want via the **Tour (?)** button in the header.
+- **Inline UI Hints**: Helpful guidance badges across the app to make operation obvious at first glance.
 
 ### 7. Accessibility & Personalization
 - **High-Contrast Mode**: Enhanced borders and high-visibility typography.
