@@ -34,11 +34,16 @@ export interface Suggestion {
   relevanceScore?: number;
 }
 
-export interface FastModePair {
+export interface SuggestionGroup {
   optionA: Suggestion;
   optionB: Suggestion;
+  optionC: Suggestion;
+  optionD: Suggestion;
   timestamp: number;
 }
+
+// Backwards compatibility alias
+export type FastModePair = SuggestionGroup;
 
 export interface AppSettings {
   language: string;
@@ -55,6 +60,7 @@ export interface AppSettings {
   quickMomentPhrase: string;
   emergencyPhrase: string;
   saveTranscriptsLocally: boolean;
+  hasSeenTutorial: boolean;
 }
 
 export interface TranscriptItem {

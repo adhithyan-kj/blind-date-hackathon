@@ -106,4 +106,5 @@ export const DEFAULT_SETTINGS = {
   quickMomentPhrase: 'Please give me a moment.',
   emergencyPhrase: 'I need emergency assistance. Please help.',
   saveTranscriptsLocally: false,
+  hasSeenTutorial: false,
 };
