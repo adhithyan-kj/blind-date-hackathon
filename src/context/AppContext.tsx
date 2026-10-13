@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useRef, useCallb
 import {
   AppSettings,
   FastModePair,
+  SuggestionGroup,
   ListeningStatus,
   Phrase,
   PhraseCategory,
@@ -147,6 +148,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubVoices();
       unsubKeyboard();
     };
+  }, []);
+
+  // Settings
+  const updateSettings = useCallback((partial: Partial<AppSettings>) => {
+    setSettings((prev) => {
+      const updated = { ...prev, ...partial };
+      StorageService.saveSettings(updated);
+      return updated;
+    });
   }, []);
 
   // Complete tutorial handler
@@ -410,14 +420,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [processIncomingUtterance, showToast]
   );
 
-  // Settings
-  const updateSettings = useCallback((partial: Partial<AppSettings>) => {
-    setSettings((prev) => {
-      const updated = { ...prev, ...partial };
-      StorageService.saveSettings(updated);
-      return updated;
-    });
-  }, []);
+
 
   // Phrase Management
   const addCustomPhrase = useCallback(

@@ -79,10 +79,8 @@ UnMute's code is decoupled from the screen. In an Android wrapper (Capacitor/Web
 
 ---
 
-**Team:** UnMute • **Event:** Blind Date Hackathon • **License:** MIT
+**Team:** UnMute • **Event:** Blind Date Hackathon 2026 • **License:** MIT
 
-Team 2
-Adhithyan K J - S5CSEA
-Aysha Misna - S! CSEA
-
-`Blind date hackathon 2026
+### 👥 Team 2
+- **Adhithyan K J** — S5 CSEA
+- **Aysha Misna** — S1 CSEA

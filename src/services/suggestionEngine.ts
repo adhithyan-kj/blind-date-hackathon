@@ -1,4 +1,4 @@
-import { Suggestion, FastModePair } from '../types';
+import { Suggestion, FastModePair, SuggestionGroup } from '../types';
 
 export interface SuggestionEngineInterface {
   generateSuggestions(utterance: string): Promise<Suggestion[]>;
